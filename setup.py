@@ -39,7 +39,7 @@ if sys.platform == 'win32':
     # We expect to be using:
     # * Windows Visual Studio 2022 with the Universal C Runtime and the
     #   Windows 11 SDK 10.0.22000.0 installed.
-    # * An Msys-2 with the UCRT64 environment installed for gcc 13.2.0
+    # * An Msys-2 with the UCRT64 environment installed for gcc 15.2.0
 
     ext_compiler = 'msvc'
     MSVC_extra_objects = [

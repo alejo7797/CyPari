@@ -37,6 +37,9 @@ if [ ! -e ${GMPPREFIX} ] ; then
 	tar xjf ../${GMPVERSION}.tar.bz2
 	mv ${GMPVERSION} gmp_src
 	cd gmp_src
+	# Fix for GCC 15 compatibility.
+	sed -i "s/void g(){}/void g(int,t1 const*,t1,t2,t1 const*,int){}/" acinclude.m4
+	autoconf
     else
 	cd build/gmp_src
     fi
@@ -134,7 +137,7 @@ elif [ `python -c "import sys; print(sys.platform)"` = 'win32' ] ; then
     make install-include
     make install-doc
     make install-cfg
-    make install-bin-sta
+    # make install-bin-sta
 else
 # linux
     ./Configure --prefix=${PARIPREFIX} --libdir=${PARILIBDIR} --with-gmp=${GMPPREFIX}
