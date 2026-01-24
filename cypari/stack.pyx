@@ -48,7 +48,7 @@ cdef inline Gen new_dynamic_gen(GEN x):
     cdef Gen g = new_gen(x)
     g.is_dynamic = True
     return g
-    
+
 cdef inline Gen new_gen(GEN x):
     """
     Create a new Gen wrapping `x`, then call ``clear_stack()``.
@@ -61,6 +61,17 @@ cdef inline Gen new_gen(GEN x):
         g = new_gen_noclear(x)
     clear_stack()
     return g
+
+cdef new_gens2(GEN x, GEN y):
+    """
+    Create a 2-tuple of new ``Gen``s from 2 ``GEN``s,
+    then call ``clear_stack()``.
+    """
+    cdef Gen g1, g2
+    g1 = new_gen_noclear(x)
+    g2 = new_gen_noclear(y)
+    clear_stack()
+    return (g1, g2)
 
 cdef inline Gen new_gen_noclear(GEN x):
     """

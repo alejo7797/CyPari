@@ -216,44 +216,6 @@ inputs and the ``precision`` argument is ignored::
     sage: pari("1.0000000000000000000000000000000000000").sin().bitprecision()
     128
 
-Elliptic curve functions
-------------------------
-
-An elliptic curve given with exact `a`-invariants is considered an
-exact object. Therefore, you should set the precision for each method
-call individually::
-
-    sage: e = pari([0,0,0,-82,0]).ellinit()
-    sage: eta1 = e.elleta(precision=100)[0]
-    sage: eta1.sage()
-    3.6054636014326520859158205642077267748
-    sage: eta1 = e.elleta(precision=180)[0]
-    sage: eta1.sage()
-    3.60546360143265208591582056420772677481026899659802474544
-
-Setting the default precision
-------------------------------
-
-The method pari.set_default_bit_precision can be used to change the
-default precision for converted floats as well as the default
-precision for computing transcendental functions.  For example, to
-work in an environmental where inexact quantities default to 128 bits
-instead of 64::
-
-    sage: pari.set_real_precision_bits(128)
-    sage: pari.set_default_bit_precision(128)
-    64
-    sage: p = pari(1.5)
-    sage: p
-    1.5000000000000000000000000000000000000
-    sage: p.bitprecision()
-    128
-    sage: pari.pi()
-    3.1415926535897932384626433832795028842
-    sage: pari.pi().bitprecision()
-    128
-
-
 TESTS:
 
 Check that output from PARI's print command is actually seen by
@@ -315,7 +277,7 @@ cdef extern from *:
 
 # Default precision (in PARI words) for the PARI library interface,
 # when no explicit precision is given and the inputs are exact.
-cdef long prec = prec_bits_to_words(53)
+cdef long prec = prec_bits_to_pari(53)
 
 #################################################################
 # conversions between various real precision models
@@ -352,7 +314,8 @@ def prec_dec_to_bits(long prec_in_dec):
     cdef double log_10 = 3.32192809488736
     return int(prec_in_dec*log_10 + 1.0)  # Add one to round up
 
-cpdef long prec_bits_to_words(unsigned long prec_in_bits):
+
+cpdef long prec_bits_to_pari(unsigned long prec_in_bits):
     r"""
     Convert from precision expressed in bits to pari real precision
     expressed in words. Note: this rounds up to the nearest word,
@@ -361,42 +324,18 @@ cpdef long prec_bits_to_words(unsigned long prec_in_bits):
 
     EXAMPLES::
 
-        sage: from cypari._pari import prec_bits_to_words
-        sage: prec_bits_to_words(70)
+        sage: from cypari._pari import prec_bits_to_pari
+        sage: prec_bits_to_pari(70)
         5   # 32-bit
         4   # 64-bit
 
-    ::
-
-        sage: [(32*n, prec_bits_to_words(32*n)) for n in range(1, 9)]
+        sage: [(32*n, prec_bits_to_pari(32*n)) for n in range(1, 9)]
         [(32, 3), (64, 4), (96, 5), (128, 6), (160, 7), (192, 8), (224, 9), (256, 10)] # 32-bit
         [(32, 3), (64, 3), (96, 4), (128, 4), (160, 5), (192, 5), (224, 6), (256, 6)] # 64-bit
     """
     if not prec_in_bits:
         return prec
-    cdef unsigned long wordsize = BITS_IN_LONG
-
-    # This equals ceil(prec_in_bits/wordsize) + 2
-    return (prec_in_bits - 1)//wordsize + 3
-
-cpdef long prec_words_to_bits(long prec_in_words):
-    r"""
-    Convert from pari real precision expressed in words to precision
-    expressed in bits. Note: this adjusts for the two codewords of a
-    pari real, and is architecture-dependent.
-
-    EXAMPLES::
-
-        sage: from cypari._pari import prec_words_to_bits
-        sage: prec_words_to_bits(10)
-        256   # 32-bit
-        512   # 64-bit
-        sage: [(n, prec_words_to_bits(n)) for n in range(3, 10)]
-        [(3, 32), (4, 64), (5, 96), (6, 128), (7, 160), (8, 192), (9, 224)]  # 32-bit
-        [(3, 64), (4, 128), (5, 192), (6, 256), (7, 320), (8, 384), (9, 448)] # 64-bit
-    """
-    # see user's guide to the pari library, page 10
-    return (prec_in_words - 2) * BITS_IN_LONG
+    return nbits2prec(prec_in_bits)
 
 cpdef long default_bitprec(long bitprec=-1):
     r"""
@@ -410,47 +349,7 @@ cpdef long default_bitprec(long bitprec=-1):
         sage: default_bitprec()
         64
     """
-    global prec
-    cdef long old_prec = prec
-    if bitprec >= 0:
-        prec = prec_bits_to_words(bitprec)
-    return (old_prec - 2) * BITS_IN_LONG
-
-def prec_dec_to_words(long prec_in_dec):
-    r"""
-    Convert from precision expressed in decimal to precision expressed
-    in words. Note: this rounds up to the nearest word, adjusts for the
-    two codewords of a pari real, and is architecture-dependent.
-
-    EXAMPLES::
-
-        sage: from cypari._pari import prec_dec_to_words
-        sage: prec_dec_to_words(38)
-        6   # 32-bit
-        4   # 64-bit
-        sage: [(n, prec_dec_to_words(n)) for n in range(10, 90, 10)]
-        [(10, 4), (20, 5), (30, 6), (40, 7), (50, 8), (60, 9), (70, 10), (80, 11)] # 32-bit
-        [(10, 3), (20, 4), (30, 4), (40, 5), (50, 5), (60, 6), (70, 6), (80, 7)] # 64-bit
-    """
-    return prec_bits_to_words(prec_dec_to_bits(prec_in_dec))
-
-def prec_words_to_dec(long prec_in_words):
-    r"""
-    Convert from precision expressed in words to precision expressed in
-    decimal. Note: this adjusts for the two codewords of a pari real,
-    and is architecture-dependent.
-
-    EXAMPLES::
-
-        sage: from cypari._pari import prec_words_to_dec
-        sage: prec_words_to_dec(5)
-        28   # 32-bit
-        57   # 64-bit
-        sage: [(n, prec_words_to_dec(n)) for n in range(3, 10)]
-        [(3, 9), (4, 19), (5, 28), (6, 38), (7, 48), (8, 57), (9, 67)] # 32-bit
-        [(3, 19), (4, 38), (5, 57), (6, 77), (7, 96), (8, 115), (9, 134)] # 64-bit
-    """
-    return prec_bits_to_dec(prec_words_to_bits(prec_in_words))
+    return DEFAULT_BITPREC
 
 
 # Callbacks from PARI to print stuff using sys.stdout.write() instead
@@ -465,7 +364,7 @@ cdef void sage_putchar(char c) noexcept:
     # Let PARI think the last character was a newline,
     # so it doesn't print one when an error occurs.
     pari_set_last_newline(1)
-    
+
 cdef void sage_puts(const char* s) noexcept:
     sys.stdout.write(String(s))
     pari_set_last_newline(1)
@@ -496,7 +395,7 @@ cdef class Pari(Pari_auto):
         # PARI is already initialized, nothing to do...
         if avma:
             return
-        
+
         # Prior to pari 2.15.1 this would set maxprime to 0, which
         # would cause uispsp to go into an infinite loop pari 2.15.1.
         # We patch uispsp to prevent the hang, but we also use the
@@ -628,14 +527,14 @@ cdef class Pari(Pari_auto):
         global pariErr
         pariErr.putch = sage_putchar
         pariErr.puts = sage_puts
-        
+
     @property
     def UI_callback(self):
         return self._UI_callback
     @UI_callback.setter
     def UI_callback(self, callback):
         self._UI_callback = callback
-    
+
     def debugstack(self):
         r"""
         Print the internal PARI variables ``top`` (top of stack), ``avma``
@@ -796,98 +695,9 @@ cdef class Pari(Pari_auto):
 
     def get_default_bit_precision(self):
         return default_bitprec()
-        
-    def set_default_bit_precision(self, int n):
-        """
-        Set the default bit precision for real and complex gens.
-
-        >>> pari.get_default_bit_precision()
-        64
-        >>> pari.pi()
-        3.14159265358979
-        >>> pari.pi().precision()
-        3  # 64-bit
-        4  # 32-bit
-        >>> pari.set_default_bit_precision(212)
-        64
-        >>> pari.get_default_bit_precision()
-        256 # 64-bit
-        224 # 32-bit
-        >>> pari.pi()
-        3.14159265358979
-        >>> pari.pi().precision()
-        6  # 64-bit
-        9  # 32-bit
-        >>> old_real_precision = pari.set_real_precision(50)
-        >>> pari.pi()
-        3.1415926535897932384626433832795028841971693993751
-        >>> pari.set_default_bit_precision(64)
-        256 # 64-bit
-        224 # 32-bit
-        >>> pari.pi()
-        3.141592653589793239
-        >>> pari.set_real_precision(old_real_precision)
-        50
-        >>> pari.pi()
-        3.14159265358979
-        """
-        return default_bitprec(n)
 
     def get_series_precision(self):
         return <int>precdl
-
-    def double_to_gen(self, x):
-        """
-        Create a new Gen with the value of the double x, using Pari's
-        dbltor.
-
-        EXAMPLES::
-
-            sage: pari.double_to_gen(1)
-            doctest:...: DeprecationWarning: pari.double_to_gen(x) is deprecated, use pari(x) instead
-            1.00000000000000
-            sage: pari.double_to_gen(1e30)
-            1.00000000000000 E30
-            sage: pari.double_to_gen(0)
-            0.E-15
-            sage: import math
-            sage: pari.double_to_gen(-math.sqrt(2))
-            -1.41421356237310
-        """
-        # Deprecated in https://trac.sagemath.org/ticket/20241
-        from warnings import warn
-        warn("pari.double_to_gen(x) is deprecated, use pari(x) instead", DeprecationWarning)
-        return new_gen_from_double(x)
-
-    cpdef _real_coerced_to_bits_prec(self, double x, long bits):
-        r""" 
-        Creates a PARI t_REAL with value given by the float x, coerced
-        to at least the given precision.  The resulting gen object
-        will have word length (not including codewords) which is large
-        enough to provide the requested number of bits, but no larger.
-
-        >>> from cypari._pari import prec_bits_to_words
-        >>> old_precision = pari.set_real_precision(64)
-        >>> x = pari._real_coerced_to_bits_prec(1.23456789012345678, 100)
-        >>> x
-        1.23456789012345669043213547411141917109
-        >>> x.length() == prec_bits_to_words(100) - 2
-        True
-        >>> pari.set_real_precision(old_precision)
-        64
-
-        Here the pari Gen uses two 64 bit words to provide at least
-        100 bits of precision.  This can be used, for example, to convert
-        quad-double numbers to pari numbers.
-        """
-        cdef long words = prec_bits_to_words(bits)
-        cdef GEN g
-        sig_on()
-        if x == 0:
-            return new_gen(real_0_bit(-bits))
-        else:
-            g = dbltor(x)
-            return new_gen(gtofp(g, words))
 
     def complex(self, re, im):
         """

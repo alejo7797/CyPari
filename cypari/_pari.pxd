@@ -19,9 +19,14 @@ cpdef Gen objtogen(s)
 cdef Gen new_gen_from_double(double)
 cdef Gen new_t_POL_from_int_star(int* vals, unsigned long length, long varnum)
 
+cdef extern from *:
+    """
+    #define DEFAULT_BITPREC prec2nbits(DEFAULTPREC)
+    """
+    long DEFAULT_BITPREC
+
 # pari_instance.pyx
-cpdef long prec_bits_to_words(unsigned long prec_in_bits)
-cpdef long prec_words_to_bits(long prec_in_words)
+cpdef long prec_bits_to_pari(unsigned long prec_in_bits)
 cpdef long default_bitprec(long bitprec=*)
 
 cdef class Pari_auto:
@@ -29,12 +34,10 @@ cdef class Pari_auto:
 
 @cython.final
 cdef class Pari(Pari_auto):
-    cdef long _real_precision
     cdef readonly Gen PARI_ZERO, PARI_ONE, PARI_TWO
     cpdef Gen zero(self)
     cpdef Gen one(self)
     cdef Gen _empty_vector(self, long n)
-    cpdef _real_coerced_to_bits_prec(self, double x, long bits)
     cdef _UI_callback
 
 cdef long get_var(v) except -2
