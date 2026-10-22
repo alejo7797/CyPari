@@ -416,24 +416,6 @@ cpdef long default_bitprec(long bitprec=-1):
         prec = prec_bits_to_words(bitprec)
     return (old_prec - 2) * BITS_IN_LONG
 
-def prec_dec_to_words(long prec_in_dec):
-    r"""
-    Convert from precision expressed in decimal to precision expressed
-    in words. Note: this rounds up to the nearest word, adjusts for the
-    two codewords of a pari real, and is architecture-dependent.
-
-    EXAMPLES::
-
-        sage: from cypari._pari import prec_dec_to_words
-        sage: prec_dec_to_words(38)
-        6   # 32-bit
-        4   # 64-bit
-        sage: [(n, prec_dec_to_words(n)) for n in range(10, 90, 10)]
-        [(10, 4), (20, 5), (30, 6), (40, 7), (50, 8), (60, 9), (70, 10), (80, 11)] # 32-bit
-        [(10, 3), (20, 4), (30, 4), (40, 5), (50, 5), (60, 6), (70, 6), (80, 7)] # 64-bit
-    """
-    return prec_bits_to_words(prec_dec_to_bits(prec_in_dec))
-
 def prec_words_to_dec(long prec_in_words):
     r"""
     Convert from precision expressed in words to precision expressed in
