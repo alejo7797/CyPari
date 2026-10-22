@@ -3915,38 +3915,6 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(factorpadic(self.g, t0.g, r))
 
-    def poldegree(self, var=-1):
-        """
-        Return the degree of this polynomial.
-        """
-        sig_on()
-        cdef long n = <long>poldegree(self.g, get_var(var))
-        sig_off()
-        return n
-
-    def polisirreducible(self):
-        """
-        f.polisirreducible(): Returns True if f is an irreducible
-        non-constant polynomial, or False if f is reducible or constant.
-        """
-        sig_on()
-        cdef long t = <long>polisirreducible(self.g)
-        clear_stack()
-        return t != 0
-
-    def polroots(self, unsigned long precision=0):
-        """
-        Complex roots of the given polynomial using Schonhage's method,
-        as modified by Gourdon.
-        """
-        sig_on()
-        return new_gen(cleanroots(self.g, prec_bits_to_words(precision)))
-
-    def rnfisnorm(self, T, long flag=0):
-        cdef Gen t0 = objtogen(T)
-        sig_on()
-        return new_gen(rnfisnorm(t0.g, self.g, flag))
-
     def ncols(self):
         """
         Return the number of columns of self.
