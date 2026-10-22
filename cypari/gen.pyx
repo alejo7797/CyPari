@@ -3322,7 +3322,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(elltors(self.g))
 
-    def omega(self, unsigned long precision=0):
+    def omega(self):
         """
         Return the basis for the period lattice of this elliptic curve.
 
@@ -3331,9 +3331,20 @@ cdef class Gen(Gen_base):
             sage: e = pari([0, -1, 1, -10, -20]).ellinit()
             sage: e.omega()
             [1.26920930427955, 0.634604652139777 - 1.45881661693850*I]
+
+        The precision is determined by the ``ellinit`` call::
+
+            sage: e = pari([0, -1, 1, -10, -20]).ellinit(precision=256)
+            sage: e.omega().bitprecision()
+            256
+
+        This also works over quadratic imaginary number fields::
+
+            sage: e = pari.ellinit([0, -1, 1, -10, -20], "nfinit(y^2 - 2)")
+            sage: w = e.omega()
         """
         sig_on()
-        return new_gen(ellR_omega(self.g, prec_bits_to_words(precision)))
+        return new_gen(member_omega(self.g))
 
     def disc(self):
         """
