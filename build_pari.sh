@@ -4,7 +4,8 @@
 
 set -e
 
-PARIURL=https://pari.math.u-bordeaux.fr/pub/pari/unix/
+# PARIURL=https://pari.math.u-bordeaux.fr/pub/pari/unix/
+PARIURL=https://src.fedoraproject.org/repo/pkgs/pari/pari-2.17.4.tar.gz/sha512/795539468cc1df93dca5f7c4b6bfb29fa4304ae4cf8a779e541684177b63980739b04cfe4f49aaa4b4aa5a268412a01d1432373d0bf7a6852784a36b56560315/
 PARIVERSION=pari-2.17.4
 GMPURL=https://ftp.gnu.org/gnu/gmp/
 GMPVERSION=gmp-6.3.0
